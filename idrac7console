@@ -1,0 +1,32 @@
+#!/bin/bash
+# This script will let you access the console of a Dell iDRAC7
+# using the latest OpenJDK 11 runtime.
+#
+# First, you need to modify /etc/ssl/openssl.cnf
+# reducing the security level from 2 to 1. This
+# allows wget to pull the jar file.
+# CipherString = DEFAULT:@SECLEVEL=1
+#
+# Second, you need to enable a deprecated cipher for Java in:
+# /etc/java-11-openjdk/security/java.security
+#
+# Below is the default and you need to remove 3DES_EDE_CBC from the list:
+#
+# jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, RC4, DES, MD5withRSA, \
+#    DH keySize < 1024, EC keySize < 224, 3DES_EDE_CBC, anon, NULL, \
+#    include jdk.disabled.namedCurves
+
+if [ $# -ne 3 ]; 
+    then echo "Usage: idrac7console <IP> <user> <password>"
+    exit
+fi
+
+if ! [ -f "avctKVM.jar" ]; then
+       wget --no-check-certificate https://$1:443/software/avctKVM.jar
+fi
+
+/usr/lib/jvm/java-11-openjdk-amd64/bin/java \
+    -cp avctKVM.jar com.avocent.idrac.kvm.Main \
+    ip=$1 kmport=5900 vport=5900 apcp=1 version=2 \
+    vmprivilege=true helpurl=https://$1:443/help/contents.html \
+    user=$2 passwd=$3
